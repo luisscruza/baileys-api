@@ -26,6 +26,7 @@ const msgRetryCounterCache = new NodeCache()
 
 const sessions = new Map()
 const retries = new Map()
+const phoneNumbers = new Map()
 
 const APP_WEBHOOK_ALLOWED_EVENTS = process.env.APP_WEBHOOK_ALLOWED_EVENTS.split(',')
 
@@ -82,6 +83,16 @@ const webhook = async (instance, type, data) => {
 }
 
 const createSession = async (sessionId, res = null, options = { usePairingCode: false, phoneNumber: '' }) => {
+    if (options.phoneNumber) {
+        const existingSessionId = phoneNumbers.get(options.phoneNumber)
+        if (existingSessionId) {
+            if (res && !res.headersSent) {
+                response(res, 400, false, 'A session for this phone number already exists.', { existingSessionId })
+            }
+            return
+        }
+    }
+
     const sessionFile = 'md_' + sessionId
 
     const logger = pino({ level: 'silent' })
@@ -287,6 +298,9 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
 
         if (connection === 'open') {
             retries.delete(sessionId)
+            if (options.phoneNumber) {
+                phoneNumbers.set(options.phoneNumber, sessionId)
+            }
         }
 
         if (connection === 'close') {
@@ -389,6 +403,13 @@ const getListSessions = () => {
 }
 
 const deleteSession = (sessionId) => {
+    for (const [phone, sid] of phoneNumbers.entries()) {
+        if (sid === sessionId) {
+            phoneNumbers.delete(phone)
+            break
+        }
+    }
+
     const sessionFile = 'md_' + sessionId
     const storeFile = `${sessionId}_store.json`
     const rmOptions = { force: true, recursive: true }
@@ -615,6 +636,12 @@ const init = () => {
     })
 }
 
+// Export phoneNumbers check function
+const numberExists = (phoneNumber) => {
+    if (!phoneNumber) return false
+    return phoneNumbers.has(phoneNumber)
+}
+
 export {
     isSessionExists,
     createSession,
@@ -647,4 +674,5 @@ export {
     getMessageMedia,
     getStoreMessage,
     blockAndUnblockUser,
+    numberExists,
 }
