@@ -120,6 +120,7 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
     const wa = makeWASocket.default({
         version,
         printQRInTerminal: false,
+        markOnlineOnConnect: false,
         mobile: false,
         auth: {
             creds: state.creds,
