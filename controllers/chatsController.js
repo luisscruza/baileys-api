@@ -48,6 +48,8 @@ const send = async (req, res) => {
 
         await sendMessage(session, receiver, message, 0)
 
+        await session.sendPresenceUpdate('unavailable')
+
         response(res, 200, true, 'The message has been successfully sent.')
     } catch {
         response(res, 500, false, 'Failed to send the message.')
