@@ -46,7 +46,7 @@ const send = async (req, res) => {
             }
         }
 
-        await sendMessage(session, receiver, message, 0)
+        await sendMessage(session, receiver, message, {}, 0)
 
         await session.sendPresenceUpdate('unavailable')
 
@@ -82,7 +82,7 @@ const sendBulk = async (req, res) => {
                 continue
             }
 
-            await sendMessage(session, receiver, message, delay)
+            await sendMessage(session, receiver, message, {}, delay)
         } catch (err) {
             errors.push({ key, message: err.message })
         }
@@ -135,7 +135,7 @@ const forward = async (req, res) => {
             forward: key[0],
         }
 
-        await sendMessage(session, jidFormat, queryForward, 0)
+        await sendMessage(session, jidFormat, queryForward, {}, 0)
 
         response(res, 200, true, 'The message has been successfully forwarded.')
     } catch {

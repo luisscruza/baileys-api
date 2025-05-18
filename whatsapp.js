@@ -3,7 +3,6 @@ import { join } from 'path'
 import pino from 'pino'
 import makeWASocket, {
     useMultiFileAuthState,
-    makeInMemoryStore,
     makeCacheableSignalKeyStore,
     DisconnectReason,
     delay,
@@ -11,9 +10,11 @@ import makeWASocket, {
     getAggregateVotesInPollMessage,
     fetchLatestBaileysVersion,
     WAMessageStatus,
-} from '@whiskeysockets/baileys'
+} from 'baileys'
 
-import proto from '@whiskeysockets/baileys'
+import proto from 'baileys'
+
+import makeInMemoryStore from './store/memory-store.js'
 
 import { toDataURL } from 'qrcode'
 import __dirname from './dirname.js'
@@ -292,7 +293,7 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
     })
 
     wa.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update
+        const { connection, lastDisconnect, qr } = update
         const statusCode = lastDisconnect?.error?.output?.statusCode
 
         callWebhook(sessionId, 'CONNECTION_UPDATE', update)
@@ -321,15 +322,13 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
             )
         }
 
-        if (update.qr) {
+        if (qr) {
             if (res && !res.headersSent) {
                 callWebhook(sessionId, 'QRCODE_UPDATED', update)
 
                 try {
-                    const qr = await toDataURL(update.qr)
-
-                    response(res, 200, true, 'QR code received, please scan the QR code.', { qr })
-
+                    const qrcode = await toDataURL(qr)
+                    response(res, 200, true, 'QR code received, please scan the QR code.', { qrcode })
                     return
                 } catch {
                     response(res, 500, false, 'Unable to create QR code.')
@@ -454,10 +453,10 @@ const isExists = async (session, jid, isGroup = false) => {
 /**
  * @param {import('@whiskeysockets/baileys').AnyWASocket} session
  */
-const sendMessage = async (session, receiver, message, delayMs = 1000) => {
+const sendMessage = async (session, receiver, message, options = {}, delayMs = 1000) => {
     try {
         await delay(parseInt(delayMs))
-        return await session.sendMessage(receiver, message)
+        return await session.sendMessage(receiver, message, options)
     } catch {
         return Promise.reject(null) // eslint-disable-line prefer-promise-reject-errors
     }
