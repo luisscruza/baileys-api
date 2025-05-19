@@ -1,7 +1,7 @@
 import { rmSync, readdir, existsSync } from 'fs'
 import { join } from 'path'
 import pino from 'pino'
-import makeWASocket, {
+import makeWASocketModule, {
     useMultiFileAuthState,
     makeCacheableSignalKeyStore,
     DisconnectReason,
@@ -115,10 +115,13 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
         }
     }, 10000)
 
+    // Make both Node and Bun compatible
+    const makeWASocket = makeWASocketModule.default ?? makeWASocketModule;
+
     /**
-     * @type {import('@whiskeysockets/baileys').AnyWASocket}
+     * @type {import('baileys').AnyWASocket}
      */
-    const wa = makeWASocket.default({
+    const wa = makeWASocket({
         version,
         printQRInTerminal: false,
         markOnlineOnConnect: false,
@@ -392,7 +395,7 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
 }
 
 /**
- * @returns {(import('@whiskeysockets/baileys').AnyWASocket|null)}
+ * @returns {(import('baileys').AnyWASocket|null)}
  */
 const getSession = (sessionId) => {
     return sessions.get(sessionId) ?? null
@@ -430,7 +433,7 @@ const getChatList = (sessionId, isGroup = false) => {
 }
 
 /**
- * @param {import('@whiskeysockets/baileys').AnyWASocket} session
+ * @param {import('baileys').AnyWASocket} session
  */
 const isExists = async (session, jid, isGroup = false) => {
     try {
@@ -451,7 +454,7 @@ const isExists = async (session, jid, isGroup = false) => {
 }
 
 /**
- * @param {import('@whiskeysockets/baileys').AnyWASocket} session
+ * @param {import('baileys').AnyWASocket} session
  */
 const sendMessage = async (session, receiver, message, options = {}, delayMs = 1000) => {
     try {
@@ -463,7 +466,7 @@ const sendMessage = async (session, receiver, message, options = {}, delayMs = 1
 }
 
 /**
- * @param {import('@whiskeysockets/baileys').AnyWASocket} session
+ * @param {import('baileys').AnyWASocket} session
  */
 const updateProfileStatus = async (session, status) => {
     try {
