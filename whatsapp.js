@@ -118,11 +118,12 @@ const createSession = async (sessionId, res = null, options = { usePairingCode: 
     // Make both Node and Bun compatible
     const makeWASocket = makeWASocketModule.default ?? makeWASocketModule;
 
+    const waVersion = [2, 3000, 1025251395];
     /**
      * @type {import('baileys').AnyWASocket}
      */
     const wa = makeWASocket({
-        version,
+        version: waVersion,
         printQRInTerminal: false,
         markOnlineOnConnect: false,
         mobile: false,
